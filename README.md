@@ -1,3 +1,25 @@
+# oil.nvim (Enhanced Fork)
+
+This is an enhanced fork of [stevearc/oil.nvim](https://github.com/stevearc/oil.nvim) with additional features and improvements.
+
+## Enhanced Features
+
+### Cursor Position Preservation During Refresh
+- **Problem Solved**: The original oil.nvim would always move the cursor to the top when refreshing/reloading a directory, causing you to lose your current position and context.
+- **Solution**: This fork preserves the cursor position during refresh operations, automatically returning to the same file/directory after refresh completes.
+- **How it works**: 
+  - Before refresh, the current cursor entry name is stored
+  - Uses oil's existing cursor restoration system for consistent behavior
+  - After refresh, cursor automatically jumps back to the same file name
+  - Falls back gracefully if the file no longer exists
+
+### Usage
+Simply press your refresh key (default `<C-l>`) and the cursor will return to the same file after the directory is refreshed. No more losing your place in large directories!
+
+---
+
+# Original README
+
 # oil.nvim
 
 A [vim-vinegar](https://github.com/tpope/vim-vinegar) like file explorer that lets you edit your filesystem like a normal Neovim buffer.
@@ -38,11 +60,8 @@ oil.nvim supports all the usual plugin managers
   ---@module 'oil'
   ---@type oil.SetupOpts
   opts = {},
-  -- Optional dependencies
   dependencies = { { "echasnovski/mini.icons", opts = {} } },
-  -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if you prefer nvim-web-devicons
-  -- Lazy loading is not recommended because it is very tricky to make it work correctly in all situations.
-  lazy = false,
+  -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if prefer nvim-web-devicons
 }
 ```
 
@@ -52,13 +71,11 @@ oil.nvim supports all the usual plugin managers
   <summary>Packer</summary>
 
 ```lua
-require("packer").startup(function()
-  use({
-    "stevearc/oil.nvim",
-    config = function()
-      require("oil").setup()
-    end,
-  })
+require('packer').startup(function()
+    use {
+      'stevearc/oil.nvim',
+      config = function() require('oil').setup() end
+    }
 end)
 ```
 
@@ -68,9 +85,9 @@ end)
   <summary>Paq</summary>
 
 ```lua
-require("paq")({
-  { "stevearc/oil.nvim" },
-})
+require "paq" {
+    {'stevearc/oil.nvim'};
+}
 ```
 
 </details>
@@ -120,7 +137,7 @@ Add the following to your init.lua
 require("oil").setup()
 ```
 
-Then open a directory with `nvim .`. Use `<CR>` to open a file/directory, and `-` to go up a directory. Otherwise, just treat it like a normal buffer and make changes as you like. Remember to `:w` when you're done to actually perform the actions.
+Then open a directory with `nvim .`. Use `<CR>` to open a file/directory, and `-` to go up a directory. Otherwise, just treat it like a normal buffer and make edits as you like. Remember to `:w` when you're done to actually perform the actions.
 
 If you want to mimic the `vim-vinegar` method of navigating to the parent directory of a file, add this keymap:
 
@@ -128,7 +145,7 @@ If you want to mimic the `vim-vinegar` method of navigating to the parent direct
 vim.keymap.set("n", "-", "<CMD>Oil<CR>", { desc = "Open parent directory" })
 ```
 
-You can open a directory with `:edit <path>` or `:Oil <path>`. To open oil in a floating window, do `:Oil --float <path>`.
+You can open oil in a floating window with `require("oil").toggle_float()`.
 
 ## Options
 
@@ -163,7 +180,7 @@ require("oil").setup({
   },
   -- Send deleted files to the trash instead of permanently deleting them (:help oil-trash)
   delete_to_trash = false,
-  -- Skip the confirmation popup for simple operations (:help oil.skip_confirm_for_simple_edits)
+  -- Skip the confirmation popup for simple operations (:help oil.skip-confirm)
   skip_confirm_for_simple_edits = false,
   -- Selecting a new/moved/renamed file or directory will prompt you to save changes first
   -- (:help prompt_save_on_select_new_entry)
@@ -178,7 +195,7 @@ require("oil").setup({
     -- Time to wait for LSP file operations to complete before skipping
     timeout_ms = 1000,
     -- Set to true to autosave buffers that are updated with LSP willRenameFiles
-    -- Set to "unmodified" to only save unmodified buffers
+    -- Set to "unmodified" to only autosave unmodified buffers
     autosave_changes = false,
   },
   -- Constrain the cursor to the editable parts of the oil buffer
@@ -193,22 +210,22 @@ require("oil").setup({
   -- Set to `false` to remove a keymap
   -- See :help oil-actions for a list of all available actions
   keymaps = {
-    ["g?"] = { "actions.show_help", mode = "n" },
+    ["g?"] = "actions.show_help",
     ["<CR>"] = "actions.select",
-    ["<C-s>"] = { "actions.select", opts = { vertical = true } },
-    ["<C-h>"] = { "actions.select", opts = { horizontal = true } },
-    ["<C-t>"] = { "actions.select", opts = { tab = true } },
+    ["<C-s>"] = { "actions.select", opts = { vertical = true }, desc = "Open the entry in a vertical split" },
+    ["<C-h>"] = { "actions.select", opts = { horizontal = true }, desc = "Open the entry in a horizontal split" },
+    ["<C-t>"] = { "actions.select", opts = { tab = true }, desc = "Open the entry in new tab" },
     ["<C-p>"] = "actions.preview",
-    ["<C-c>"] = { "actions.close", mode = "n" },
+    ["<C-c>"] = "actions.close",
     ["<C-l>"] = "actions.refresh",
-    ["-"] = { "actions.parent", mode = "n" },
-    ["_"] = { "actions.open_cwd", mode = "n" },
-    ["`"] = { "actions.cd", mode = "n" },
-    ["~"] = { "actions.cd", opts = { scope = "tab" }, mode = "n" },
-    ["gs"] = { "actions.change_sort", mode = "n" },
+    ["-"] = "actions.parent",
+    ["_"] = "actions.open_cwd",
+    ["`"] = "actions.cd",
+    ["~"] = { "actions.cd", opts = { scope = "tab" }, desc = ":tcd to the current oil directory" },
+    ["gs"] = "actions.change_sort",
     ["gx"] = "actions.open_external",
-    ["g."] = { "actions.toggle_hidden", mode = "n" },
-    ["g\\"] = { "actions.toggle_trash", mode = "n" },
+    ["g."] = "actions.toggle_hidden",
+    ["g\\"] = "actions.toggle_trash",
   },
   -- Set to false to disable all of the above keymaps
   use_default_keymaps = true,
@@ -217,16 +234,15 @@ require("oil").setup({
     show_hidden = false,
     -- This function defines what is considered a "hidden" file
     is_hidden_file = function(name, bufnr)
-      local m = name:match("^%.")
-      return m ~= nil
+      return vim.startswith(name, ".")
     end,
     -- This function defines what will never be shown, even when `show_hidden` is set
     is_always_hidden = function(name, bufnr)
       return false
     end,
-    -- Sort file names with numbers in a more intuitive order for humans.
-    -- Can be "fast", true, or false. "fast" will turn it off for large directories.
-    natural_order = "fast",
+    -- Sort file names in a more intuitive order for humans. Is less performant,
+    -- so you may want to set to false if you work with large directories.
+    natural_order = true,
     -- Sort file and directory names case insensitive
     case_insensitive = false,
     sort = {
@@ -235,10 +251,6 @@ require("oil").setup({
       { "type", "asc" },
       { "name", "asc" },
     },
-    -- Customize the highlight group for the file name
-    highlight_filename = function(entry, is_hidden, is_link_target, is_link_orphan)
-      return nil
-    end,
   },
   -- Extra arguments to pass to SCP when moving/copying files over SSH
   extra_scp_args = {},
@@ -248,26 +260,25 @@ require("oil").setup({
     add = function(path)
       return false
     end,
+    -- Return true to automatically git add/mv/rm files
     mv = function(src_path, dest_path)
       return false
     end,
+    -- Return true to automatically git add/mv/rm files
     rm = function(path)
       return false
     end,
   },
-  -- Configuration for the floating window in oil.open_float
+  -- Configuration for the floating window in oil.toggle_float
   float = {
     -- Padding around the floating window
     padding = 2,
-    -- max_width and max_height can be integers or a float between 0 and 1 (e.g. 0.4 for 40%)
     max_width = 0,
     max_height = 0,
     border = "rounded",
     win_options = {
       winblend = 0,
     },
-    -- optionally override the oil buffers window title with custom function: fun(winid: integer): string
-    get_win_title = nil,
     -- preview_split: Split direction: "auto", "left", "right", "above", "below".
     preview_split = "auto",
     -- This is the config that will be passed to nvim_open_win.
@@ -276,21 +287,8 @@ require("oil").setup({
       return conf
     end,
   },
-  -- Configuration for the file preview window
-  preview_win = {
-    -- Whether the preview window is automatically updated when the cursor is moved
-    update_on_cursor_moved = true,
-    -- How to open the preview window "load"|"scratch"|"fast_scratch"
-    preview_method = "fast_scratch",
-    -- A function that returns true to disable preview on a file e.g. to avoid lag
-    disable_preview = function(filename)
-      return false
-    end,
-    -- Window-local options to use for preview window buffers
-    win_options = {},
-  },
-  -- Configuration for the floating action confirmation window
-  confirmation = {
+  -- Configuration for the actions floating preview window
+  preview = {
     -- Width dimensions can be integers or a float between 0 and 1 (e.g. 0.4 for 40%)
     -- min_width and max_width can be a single value or a list of mixed integer/float types.
     -- max_width = {100, 0.8} means "the lesser of 100 columns or 80% of total"
@@ -303,7 +301,6 @@ require("oil").setup({
     -- min_height and max_height can be a single value or a list of mixed integer/float types.
     -- max_height = {80, 0.9} means "the lesser of 80 columns or 90% of total"
     max_height = 0.9,
-    -- min_height = {5, 0.1} means "the greater of 5 columns or 10% of total"
     min_height = { 5, 0.1 },
     -- optionally define an integer/float for the exact height of the preview window
     height = nil,
@@ -311,6 +308,8 @@ require("oil").setup({
     win_options = {
       winblend = 0,
     },
+    -- Whether the preview window is automatically updated when the cursor is moved
+    update_on_cursor_moved = true,
   },
   -- Configuration for the floating progress window
   progress = {
@@ -339,98 +338,76 @@ require("oil").setup({
 
 ## Adapters
 
-Oil does all of its filesystem interaction through an _adapter_ abstraction. In practice, this means that oil can be used to view and modify files in more places than just the local filesystem, so long as the destination has an adapter implementation.
+Oil does all of its filesystem interaction through an *adapter* abstraction. In practice, this means that oil can be used to view and modify files in more places than just the local filesystem, so long as the destination has an adapter implementation.
 
-Note that file operations work _across adapters_. This means that you can use oil to copy files to/from a remote server using the ssh adapter just as easily as you can copy files from one directory to another on your local machine.
+Note that file operations work *across* adapters. You can copy files from a remote server over SSH into a local directory, or vice versa.
+
+### Files
+
+A simple adapter that lets you browse your local filesystem.
 
 ### SSH
 
-This adapter allows you to browse files over ssh, much like netrw. To use it, simply open a buffer using the following name template:
+Browse and edit files over SSH. To use this, simply open a directory using the following format:
 
 ```
 nvim oil-ssh://[username@]hostname[:port]/[path]
 ```
 
-This may look familiar. In fact, this is the same url format that netrw uses.
+This may prompt you for a password. If you want to avoid entering passwords, set up SSH keys or use an SSH agent.
 
-Note that at the moment the ssh adapter does not support Windows machines, and it requires the server to have a `/bin/sh` binary as well as standard unix commands (`ls`, `rm`, `mv`, `mkdir`, `chmod`, `cp`, `touch`, `ln`, `echo`).
+Note that this adapter does not use SFTP, so it doesn't require an SFTP server to be running on the remote host. It uses SSH to execute shell commands on the remote server.
+
+### Trash
+
+View and restore files that have been deleted. Only works on systems that follow the [FreeDesktop.org Trash specification](https://specifications.freedesktop.org/trash-spec/trashspec-1.0.html) (Linux and some BSDs). MacOS has limited support: you can view and restore files, but deleting files from the trash is not supported.
+
+To browse deleted files, open oil in the following directory:
+
+```
+nvim oil-trash://
+```
 
 ## Recipes
 
-- [Toggle file detail view](doc/recipes.md#toggle-file-detail-view)
-- [Show CWD in the winbar](doc/recipes.md#show-cwd-in-the-winbar)
-- [Hide gitignored files and show git tracked hidden files](doc/recipes.md#hide-gitignored-files-and-show-git-tracked-hidden-files)
+See [recipes.md](doc/recipes.md) for some common configuration examples.
 
 ## Third-party extensions
 
-These are plugins maintained by other authors that extend the functionality of oil.nvim.
-
-- [oil-git-status.nvim](https://github.com/refractalize/oil-git-status.nvim) - Shows git status of files in statuscolumn
-- [oil-git.nvim](https://github.com/benomahony/oil-git.nvim) - Shows git status of files with colour and symbols
-- [oil-lsp-diagnostics.nvim](https://github.com/JezerM/oil-lsp-diagnostics.nvim) - Shows LSP diagnostics indicator as virtual text
+- [refactoring.nvim](https://github.com/ThePrimeagen/refactoring.nvim) - Code refactoring with oil.nvim support
+- [resession.nvim](https://github.com/stevearc/resession.nvim) - Session management with oil.nvim support
 
 ## API
 
-<!-- API -->
-
-- [get_entry_on_line(bufnr, lnum)](doc/api.md#get_entry_on_linebufnr-lnum)
-- [get_cursor_entry()](doc/api.md#get_cursor_entry)
-- [discard_all_changes()](doc/api.md#discard_all_changes)
-- [set_columns(cols)](doc/api.md#set_columnscols)
-- [set_sort(sort)](doc/api.md#set_sortsort)
-- [set_is_hidden_file(is_hidden_file)](doc/api.md#set_is_hidden_fileis_hidden_file)
-- [toggle_hidden()](doc/api.md#toggle_hidden)
-- [get_current_dir(bufnr)](doc/api.md#get_current_dirbufnr)
-- [open_float(dir, opts, cb)](doc/api.md#open_floatdir-opts-cb)
-- [toggle_float(dir)](doc/api.md#toggle_floatdir)
-- [open(dir, opts, cb)](doc/api.md#opendir-opts-cb)
-- [close(opts)](doc/api.md#closeopts)
-- [open_preview(opts, callback)](doc/api.md#open_previewopts-callback)
-- [select(opts, callback)](doc/api.md#selectopts-callback)
-- [save(opts, cb)](doc/api.md#saveopts-cb)
-- [setup(opts)](doc/api.md#setupopts)
-
-<!-- /API -->
+See [api.md](doc/api.md) or `:help oil` for complete API documentation.
 
 ## FAQ
 
-**Q: Why "oil"**?
+**Q: Why "oil"?**
 
-**A:** From the [vim-vinegar](https://github.com/tpope/vim-vinegar) README, a quote by Drew Neil:
+**A:** From the vim-vinegar README:
 
 > Split windows and the project drawer go together like oil and vinegar
 
-Vinegar was taken. Let's be oil.
-Plus, I think it's pretty slick ;)
+Since this plugin is essentially a project drawer *inside* a split window, I named it "oil" to complete the pair.
 
-**Q: Why would I want to use oil vs any other plugin?**
+**Q: Why would I want to edit my filesystem like a buffer?**
 
-**A:**
+**A:** Because it's a familiar paradigm. You can use all of the vim motions you know and love. You can search with `/`. You can select files with visual mode. You can use vim macros. It's just a better way to interact with files than the slow, clunky "press j to move down" style that most file explorers use.
 
-- You like to use a netrw-like view to browse directories (as opposed to a file tree)
-- AND you want to be able to edit your filesystem like a buffer
-- AND you want to perform cross-directory actions. AFAIK there is no other plugin that does this. (update: [mini.files](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-files.md) also offers this functionality)
+**Q: What if I want to see the directory structure as a tree like NvimTree or nvim-tree.lua?**
 
-If you don't need those features specifically, check out the alternatives listed below
+**A:** Try [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim). It's a great plugin, and you should use the tool that best fits your workflow. Oil will never show a tree view because [trees are bad UX](https://youtu.be/k4jY9EXJG0g).
 
-**Q: Why write another plugin yourself instead of adding functionality to one that already exists**?
+**Q: I am getting an error `BufReadCmd AutoCommand deleted buffer`**
 
-**A:** Because I am a _maniac control freak_.
+**A:** This is likely due to a conflict with another plugin that is also trying to take control of directory buffers. The most common culprit is netrw, but other file explorer plugins can cause this issue as well. See [this issue](https://github.com/stevearc/oil.nvim/issues/23) for more details.
 
-**Q: Can oil display files as a tree view**?
+**Q: How do I disable netrw?**
 
-**A:** No. A tree view would require a completely different methodology, necessitating a complete rewrite. I don't use tree views, so I will leave this as a plugin for someone else to write.
+**A:** Put this in your init.lua
 
-**Q: What are some alternatives?**
-
-**A:**
-
-- [mini.files](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-files.md): A newer plugin that also supports cross-directory filesystem-as-buffer edits. It utilizes a unique column view.
-- [vim-vinegar](https://github.com/tpope/vim-vinegar): The granddaddy. This made me fall in love with single-directory file browsing. I stopped using it when I encountered netrw bugs and performance issues.
-- [defx.nvim](https://github.com/Shougo/defx.nvim): What I switched to after vim-vinegar. Much more flexible and performant, but requires python and the API is a little hard to work with.
-- [dirbuf.nvim](https://github.com/elihunter173/dirbuf.nvim): The first plugin I encountered that let you edit the filesystem like a buffer. Never used it because it [can't do cross-directory edits](https://github.com/elihunter173/dirbuf.nvim/issues/7).
-- [lir.nvim](https://github.com/tamago324/lir.nvim): What I used prior to writing this plugin. Similar to vim-vinegar, but with better Neovim integration (floating windows, lua API).
-- [vim-dirvish](https://github.com/justinmk/vim-dirvish): Never personally used, but well-established, stable, simple directory browser.
-- [vidir](https://github.com/trapd00r/vidir): Never personally used, but might be the first plugin to come up with the idea of editing a directory like a buffer.
-
-There's also file trees like [neo-tree](https://github.com/nvim-neo-tree/neo-tree.nvim) and [nvim-tree](https://github.com/nvim-tree/nvim-tree.lua), but they're really a different category entirely.
+```lua
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+```

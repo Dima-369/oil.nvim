@@ -316,7 +316,26 @@ M.refresh = {
         return
       end
     end
-    vim.cmd.edit({ bang = true })
+    
+    -- Store current cursor position before refresh
+    local oil = require("oil")
+    local view = require("oil.view")
+    local entry = oil.get_cursor_entry()
+    local bufname = vim.api.nvim_buf_get_name(0)
+    
+    if entry then
+      view.set_last_cursor(bufname, entry.name)
+    end
+    
+    -- Use render_buffer_async instead of vim.cmd.edit to preserve cursor position
+    view.render_buffer_async(0, { refetch = true }, function(err)
+      if err then
+        vim.notify(
+          string.format("Error refreshing oil buffer: %s", err),
+          vim.log.levels.ERROR
+        )
+      end
+    end)
 
     -- :h CTRL-L-default
     vim.cmd.nohlsearch()

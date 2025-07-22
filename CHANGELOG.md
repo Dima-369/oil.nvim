@@ -1,4 +1,4 @@
-oeu# Changelog
+# Changelog
 
 ## [2.15.0](https://github.com/stevearc/oil.nvim/compare/v2.14.0...v2.15.0) (2025-02-13)
 

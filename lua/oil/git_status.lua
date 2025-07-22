@@ -102,8 +102,16 @@ local function update_all_repos()
     return
   end
   
+  vim.notify("[Oil Git Debug] Timer update - refreshing " .. #repos .. " repositories", vim.log.levels.INFO)
+  
   for _, repo_root in ipairs(repos) do
-    update_repo_status(repo_root)
+    update_repo_status(repo_root, function()
+      -- Refresh oil buffers after periodic update
+      vim.notify("[Oil Git Debug] *** PERIODIC RERENDER CALLBACK TRIGGERED ***", vim.log.levels.ERROR)
+      local view = require("oil.view")
+      view.rerender_all_oil_buffers({ refetch = false })
+      vim.notify("[Oil Git Debug] *** PERIODIC RERENDER CALLBACK COMPLETED ***", vim.log.levels.ERROR)
+    end)
   end
 end
 
@@ -131,9 +139,11 @@ M.get_status = function(file_path)
     -- Trigger async update
     update_repo_status(repo_root, function()
       -- Refresh oil buffers that might be affected
+      vim.notify("[Oil Git Debug] *** RERENDER CALLBACK TRIGGERED ***", vim.log.levels.ERROR)
       vim.notify("[Oil Git Debug] Refreshing oil buffers after git status update", vim.log.levels.INFO)
       local view = require("oil.view")
       view.rerender_all_oil_buffers({ refetch = false })
+      vim.notify("[Oil Git Debug] *** RERENDER CALLBACK COMPLETED ***", vim.log.levels.ERROR)
     end)
     return nil
   end

@@ -115,10 +115,38 @@ local function update_all_repos()
   end
 end
 
----Get git status for a file
----@param file_path string
+---Check if a directory has any files with git changes
+---@param dir_path string
+---@param repo_root string
 ---@return string|nil status_code
-M.get_status = function(file_path)
+local function get_directory_status(dir_path, repo_root)
+  if not status_cache[repo_root] then
+    return nil
+  end
+  
+  local dir_relative = dir_path:sub(#repo_root + 2) -- Remove repo root and slash
+  
+  vim.notify("[Oil Git Debug] Checking directory: " .. dir_relative .. " for changes", vim.log.levels.DEBUG)
+  
+  -- Check if any files in this directory have changes
+  for file_path, status in pairs(status_cache[repo_root]) do
+    vim.notify("[Oil Git Debug] Comparing file: " .. file_path .. " with dir: " .. dir_relative, vim.log.levels.DEBUG)
+    
+    -- Check if file is directly in this directory or subdirectory
+    if vim.startswith(file_path, dir_relative .. "/") then
+      vim.notify("[Oil Git Debug] Found file in directory: " .. file_path .. " with status: " .. status, vim.log.levels.INFO)
+      return status -- Return the first status found
+    end
+  end
+  
+  return nil
+end
+
+---Get git status for a file or directory
+---@param file_path string
+---@param is_directory? boolean
+---@return string|nil status_code
+M.get_status = function(file_path, is_directory)
   if not config.enabled then
     vim.notify("[Oil Git Debug] Git status disabled", vim.log.levels.DEBUG)
     return nil
@@ -163,10 +191,19 @@ M.get_status = function(file_path)
   )
   
   local status = status_cache[repo_root][relative_path]
+  
+  -- If it's a directory and no direct status, check for files within the directory
+  if not status and is_directory then
+    status = get_directory_status(file_path, repo_root)
+    if status then
+      vim.notify("[Oil Git Debug] Found directory status '" .. status .. "' for dir: " .. relative_path, vim.log.levels.DEBUG)
+    end
+  end
+  
   if status then
-    vim.notify("[Oil Git Debug] Found status '" .. status .. "' for file: " .. relative_path, vim.log.levels.DEBUG)
+    vim.notify("[Oil Git Debug] Found status '" .. status .. "' for " .. (is_directory and "dir" or "file") .. ": " .. relative_path, vim.log.levels.DEBUG)
   else
-    vim.notify("[Oil Git Debug] No status found for file: " .. relative_path, vim.log.levels.DEBUG)
+    vim.notify("[Oil Git Debug] No status found for " .. (is_directory and "dir" or "file") .. ": " .. relative_path, vim.log.levels.DEBUG)
   end
   
   return status
@@ -260,13 +297,13 @@ M.setup = function(opts)
     vim.notify("[Oil Git Debug] Failed to create timer", vim.log.levels.ERROR)
   end
   
-  -- Setup highlight groups
-  vim.api.nvim_set_hl(0, "OilGitAdded", { link = "DiffAdd" })
-  vim.api.nvim_set_hl(0, "OilGitModified", { link = "DiffChange" })
-  vim.api.nvim_set_hl(0, "OilGitDeleted", { link = "DiffDelete" })
-  vim.api.nvim_set_hl(0, "OilGitRenamed", { link = "DiffChange" })
-  vim.api.nvim_set_hl(0, "OilGitCopied", { link = "DiffAdd" })
-  vim.api.nvim_set_hl(0, "OilGitUntracked", { link = "Comment" })
+  -- Setup highlight groups with foreground colors
+  vim.api.nvim_set_hl(0, "OilGitAdded", { fg = "#a6e3a1" })      -- Green
+  vim.api.nvim_set_hl(0, "OilGitModified", { fg = "#f9e2af" })   -- Yellow
+  vim.api.nvim_set_hl(0, "OilGitDeleted", { fg = "#f38ba8" })    -- Red
+  vim.api.nvim_set_hl(0, "OilGitRenamed", { fg = "#fab387" })    -- Orange
+  vim.api.nvim_set_hl(0, "OilGitCopied", { fg = "#a6e3a1" })     -- Green
+  vim.api.nvim_set_hl(0, "OilGitUntracked", { fg = "#6c7086" })  -- Gray
   
   vim.notify("[Oil Git Debug] Highlight groups configured", vim.log.levels.INFO)
 end

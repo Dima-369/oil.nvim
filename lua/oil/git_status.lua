@@ -230,10 +230,10 @@ M.setup = function(opts)
   -- Setup highlight groups with foreground colors
   vim.api.nvim_set_hl(0, "OilGitAdded", { fg = "#22c55e" })      -- green 500
   vim.api.nvim_set_hl(0, "OilGitModified", { fg = "#3b82f6" })   -- blue 500
-  vim.api.nvim_set_hl(0, "OilGitDeleted", { fg = "#f38ba8" })    -- Red
+  vim.api.nvim_set_hl(0, "OilGitDeleted", { fg = "#ef4444" })    -- red 500
   vim.api.nvim_set_hl(0, "OilGitRenamed", { fg = "#3b82f6" })    -- blue 500
-  vim.api.nvim_set_hl(0, "OilGitCopied", { fg = "#a6e3a1" })     -- Green
-  vim.api.nvim_set_hl(0, "OilGitUntracked", { fg = "#6b7280" })  -- gray 500
+  vim.api.nvim_set_hl(0, "OilGitCopied", { fg = "#22c55e" })     -- green 500
+  vim.api.nvim_set_hl(0, "OilGitUntracked", { fg = "#f59e0b" })  -- amber 500
   
   -- Setup buffer save autocmd for immediate git status updates
   vim.api.nvim_create_autocmd("BufWritePost", {

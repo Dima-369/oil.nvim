@@ -790,29 +790,16 @@ M.format_entry_cols = function(entry, column_defs, col_width, adapter, is_hidden
   end
 
   -- Check for git status highlighting
-  vim.notify("[Oil Git Debug] Starting git status check for entry: " .. name, vim.log.levels.INFO)
   local git_hl = nil
   if git_status.is_enabled() then
-    vim.notify("[Oil Git Debug] Git status is enabled", vim.log.levels.INFO)
     local bufname = vim.api.nvim_buf_get_name(bufnr)
     local _, dir = util.parse_url(bufname)
     if dir then
       local full_path = dir:gsub("/$", "") .. "/" .. name
       local is_directory = (entry_type == "directory")
-      vim.notify("[Oil Git Debug] Checking git status for: " .. full_path .. " (is_dir: " .. tostring(is_directory) .. ")", vim.log.levels.INFO)
       local status_code = git_status.get_status(full_path, is_directory)
-      vim.notify("[Oil Git Debug] Got status code: " .. tostring(status_code) .. " for " .. name, vim.log.levels.INFO)
       git_hl = git_status.get_highlight_group(status_code)
-      if git_hl then
-        vim.notify("[Oil Git Debug] Applied highlight '" .. git_hl .. "' to file: " .. name, vim.log.levels.INFO)
-      else
-        vim.notify("[Oil Git Debug] No highlight applied to file: " .. name, vim.log.levels.DEBUG)
-      end
-    else
-      vim.notify("[Oil Git Debug] No directory found for buffer: " .. bufname, vim.log.levels.DEBUG)
     end
-  else
-    vim.notify("[Oil Git Debug] Git status not enabled in view rendering", vim.log.levels.DEBUG)
   end
 
   if entry_type == "directory" then

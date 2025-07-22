@@ -790,8 +790,10 @@ M.format_entry_cols = function(entry, column_defs, col_width, adapter, is_hidden
   end
 
   -- Check for git status highlighting
+  vim.notify("[Oil Git Debug] Starting git status check for entry: " .. name, vim.log.levels.INFO)
   local git_hl = nil
   if git_status.is_enabled() then
+    vim.notify("[Oil Git Debug] Git status is enabled", vim.log.levels.INFO)
     local bufname = vim.api.nvim_buf_get_name(bufnr)
     local _, dir = util.parse_url(bufname)
     if dir then

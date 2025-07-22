@@ -144,6 +144,12 @@ M.get_status = function(file_path)
     relative_path = file_path:sub(#repo_root + 2) -- +2 to skip the trailing slash
   end
   
+  vim.notify(
+    string.format("[Oil Git Debug] Path conversion - full: %s, repo: %s, relative: %s", 
+      file_path, repo_root, relative_path),
+    vim.log.levels.INFO
+  )
+  
   local status = status_cache[repo_root][relative_path]
   if status then
     vim.notify("[Oil Git Debug] Found status '" .. status .. "' for file: " .. relative_path, vim.log.levels.DEBUG)

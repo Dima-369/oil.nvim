@@ -159,38 +159,49 @@ end
 ---@return string|nil
 M.get_highlight_group = function(status_code)
   if not status_code then
+    vim.notify("[Oil Git Debug] No status code provided to get_highlight_group", vim.log.levels.DEBUG)
     return nil
   end
+  
+  vim.notify("[Oil Git Debug] Getting highlight for status: '" .. status_code .. "'", vim.log.levels.DEBUG)
   
   local first_char = status_code:sub(1, 1)
   local second_char = status_code:sub(2, 2)
   
+  local highlight = nil
+  
   -- Check index status (first character)
   if first_char == "A" then
-    return "OilGitAdded"
+    highlight = "OilGitAdded"
   elseif first_char == "M" then
-    return "OilGitModified"
+    highlight = "OilGitModified"
   elseif first_char == "D" then
-    return "OilGitDeleted"
+    highlight = "OilGitDeleted"
   elseif first_char == "R" then
-    return "OilGitRenamed"
+    highlight = "OilGitRenamed"
   elseif first_char == "C" then
-    return "OilGitCopied"
+    highlight = "OilGitCopied"
   end
   
   -- Check working tree status (second character)
   if second_char == "M" then
-    return "OilGitModified"
+    highlight = "OilGitModified"
   elseif second_char == "D" then
-    return "OilGitDeleted"
+    highlight = "OilGitDeleted"
   end
   
   -- Untracked files
   if status_code == "??" then
-    return "OilGitUntracked"
+    highlight = "OilGitUntracked"
   end
   
-  return nil
+  if highlight then
+    vim.notify("[Oil Git Debug] Returning highlight: " .. highlight .. " for status: " .. status_code, vim.log.levels.INFO)
+  else
+    vim.notify("[Oil Git Debug] No highlight found for status: " .. status_code, vim.log.levels.WARN)
+  end
+  
+  return highlight
 end
 
 ---Setup git status monitoring

@@ -797,7 +797,7 @@ M.format_entry_cols = function(entry, column_defs, col_width, adapter, is_hidden
     local bufname = vim.api.nvim_buf_get_name(bufnr)
     local _, dir = util.parse_url(bufname)
     if dir then
-      local full_path = dir .. "/" .. name
+      local full_path = dir:gsub("/$", "") .. "/" .. name
       vim.notify("[Oil Git Debug] Checking git status for: " .. full_path, vim.log.levels.INFO)
       local status_code = git_status.get_status(full_path)
       vim.notify("[Oil Git Debug] Got status code: " .. tostring(status_code) .. " for " .. name, vim.log.levels.INFO)

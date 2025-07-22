@@ -149,9 +149,11 @@ M.get_status = function(file_path)
   end
   
   -- Get relative path from repo root
-  local relative_path = vim.fn.fnamemodify(file_path, ":.")
+  local relative_path
   if vim.startswith(file_path, repo_root) then
     relative_path = file_path:sub(#repo_root + 2) -- +2 to skip the trailing slash
+  else
+    relative_path = vim.fn.fnamemodify(file_path, ":.")
   end
   
   vim.notify(

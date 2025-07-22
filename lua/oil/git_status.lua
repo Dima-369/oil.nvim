@@ -87,9 +87,22 @@ local function update_all_repos()
   
   for _, repo_root in ipairs(repos) do
     update_repo_status(repo_root, function()
-      -- Refresh oil buffers after periodic update
+      -- Only refresh oil buffers if no buffer is currently modified
+      -- This prevents wiping user input while typing new file names
       local view = require("oil.view")
-      view.rerender_all_oil_buffers({ refetch = false })
+      local buffers = view.get_all_buffers()
+      local has_modifications = false
+      
+      for _, bufnr in ipairs(buffers) do
+        if vim.bo[bufnr].modified then
+          has_modifications = true
+          break
+        end
+      end
+      
+      if not has_modifications then
+        view.rerender_all_oil_buffers({ refetch = false })
+      end
     end)
   end
 end
@@ -244,8 +257,22 @@ M.setup = function(opts)
       if repo_root and status_cache[repo_root] then
         -- Update git status immediately after save
         update_repo_status(repo_root, function()
+          -- Only refresh oil buffers if no buffer is currently modified
+          -- This prevents wiping user input while typing new file names
           local view = require("oil.view")
-          view.rerender_all_oil_buffers({ refetch = false })
+          local buffers = view.get_all_buffers()
+          local has_modifications = false
+          
+          for _, bufnr in ipairs(buffers) do
+            if vim.bo[bufnr].modified then
+              has_modifications = true
+              break
+            end
+          end
+          
+          if not has_modifications then
+            view.rerender_all_oil_buffers({ refetch = false })
+          end
         end)
       end
     end,
@@ -273,8 +300,22 @@ M.refresh = function()
   local repo_root = get_git_root(cwd)
   if repo_root then
     update_repo_status(repo_root, function()
+      -- Only refresh oil buffers if no buffer is currently modified
+      -- This prevents wiping user input while typing new file names
       local view = require("oil.view")
-      view.rerender_all_oil_buffers({ refetch = false })
+      local buffers = view.get_all_buffers()
+      local has_modifications = false
+      
+      for _, bufnr in ipairs(buffers) do
+        if vim.bo[bufnr].modified then
+          has_modifications = true
+          break
+        end
+      end
+      
+      if not has_modifications then
+        view.rerender_all_oil_buffers({ refetch = false })
+      end
     end)
   end
 end

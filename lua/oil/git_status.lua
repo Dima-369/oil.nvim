@@ -54,6 +54,8 @@ end
 ---@param repo_root string
 ---@param callback? fun()
 local function update_repo_status(repo_root, callback)
+  vim.notify("[Oil Git Debug] Running git status in: " .. repo_root, vim.log.levels.INFO)
+  
   local proc = vim.system(
     { "git", "status", "--porcelain" },
     {
@@ -62,10 +64,25 @@ local function update_repo_status(repo_root, callback)
     },
     function(result)
       if result.code == 0 then
-        status_cache[repo_root] = parse_git_status(result.stdout or "")
+        local parsed_status = parse_git_status(result.stdout or "")
+        status_cache[repo_root] = parsed_status
+        
+        local file_count = vim.tbl_count(parsed_status)
+        vim.notify(
+          string.format("[Oil Git Debug] Found %d files with git status in %s", file_count, repo_root),
+          vim.log.levels.INFO
+        )
+        
+        if file_count > 0 then
+          vim.notify("[Oil Git Debug] Files with status: " .. vim.inspect(parsed_status), vim.log.levels.INFO)
+        end
       else
         -- Clear cache if git command fails
         status_cache[repo_root] = {}
+        vim.notify(
+          string.format("[Oil Git Debug] Git command failed in %s: %s", repo_root, result.stderr or "unknown error"),
+          vim.log.levels.WARN
+        )
       end
       if callback then
         vim.schedule(callback)
@@ -95,20 +112,26 @@ end
 ---@return string|nil status_code
 M.get_status = function(file_path)
   if not config.enabled then
+    vim.notify("[Oil Git Debug] Git status disabled", vim.log.levels.DEBUG)
     return nil
   end
   
   local repo_root = get_git_root(file_path)
   if not repo_root then
+    vim.notify("[Oil Git Debug] No git root found for: " .. file_path, vim.log.levels.DEBUG)
     return nil
   end
   
+  vim.notify("[Oil Git Debug] Checking status for: " .. file_path .. " in repo: " .. repo_root, vim.log.levels.DEBUG)
+  
   -- Initialize cache for this repo if needed
   if not status_cache[repo_root] then
+    vim.notify("[Oil Git Debug] Initializing cache for repo: " .. repo_root, vim.log.levels.INFO)
     status_cache[repo_root] = {}
     -- Trigger async update
     update_repo_status(repo_root, function()
       -- Refresh oil buffers that might be affected
+      vim.notify("[Oil Git Debug] Refreshing oil buffers after git status update", vim.log.levels.INFO)
       local view = require("oil.view")
       view.rerender_all_oil_buffers({ refetch = false })
     end)
@@ -121,7 +144,14 @@ M.get_status = function(file_path)
     relative_path = file_path:sub(#repo_root + 2) -- +2 to skip the trailing slash
   end
   
-  return status_cache[repo_root][relative_path]
+  local status = status_cache[repo_root][relative_path]
+  if status then
+    vim.notify("[Oil Git Debug] Found status '" .. status .. "' for file: " .. relative_path, vim.log.levels.DEBUG)
+  else
+    vim.notify("[Oil Git Debug] No status found for file: " .. relative_path, vim.log.levels.DEBUG)
+  end
+  
+  return status
 end
 
 ---Get highlight group for git status
@@ -170,7 +200,14 @@ M.setup = function(opts)
   config.enabled = opts.enabled ~= false
   config.update_interval = opts.update_interval or 3000
   
+  vim.notify(
+    string.format("[Oil Git Debug] Setup called - enabled: %s, interval: %d", 
+      tostring(config.enabled), config.update_interval),
+    vim.log.levels.INFO
+  )
+  
   if not config.enabled then
+    vim.notify("[Oil Git Debug] Git status monitoring disabled", vim.log.levels.INFO)
     if update_timer then
       update_timer:stop()
       update_timer:close()
@@ -189,6 +226,9 @@ M.setup = function(opts)
   update_timer = uv.new_timer()
   if update_timer then
     update_timer:start(1000, config.update_interval, update_all_repos)
+    vim.notify("[Oil Git Debug] Timer started with interval: " .. config.update_interval .. "ms", vim.log.levels.INFO)
+  else
+    vim.notify("[Oil Git Debug] Failed to create timer", vim.log.levels.ERROR)
   end
   
   -- Setup highlight groups
@@ -198,6 +238,8 @@ M.setup = function(opts)
   vim.api.nvim_set_hl(0, "OilGitRenamed", { link = "DiffChange" })
   vim.api.nvim_set_hl(0, "OilGitCopied", { link = "DiffAdd" })
   vim.api.nvim_set_hl(0, "OilGitUntracked", { link = "Comment" })
+  
+  vim.notify("[Oil Git Debug] Highlight groups configured", vim.log.levels.INFO)
 end
 
 ---Clear git status cache

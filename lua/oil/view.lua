@@ -796,9 +796,17 @@ M.format_entry_cols = function(entry, column_defs, col_width, adapter, is_hidden
     local _, dir = util.parse_url(bufname)
     if dir then
       local full_path = dir .. "/" .. name
+      vim.notify("[Oil Git Debug] Checking git status for: " .. full_path, vim.log.levels.DEBUG)
       local status_code = git_status.get_status(full_path)
       git_hl = git_status.get_highlight_group(status_code)
+      if git_hl then
+        vim.notify("[Oil Git Debug] Applied highlight '" .. git_hl .. "' to file: " .. name, vim.log.levels.INFO)
+      end
+    else
+      vim.notify("[Oil Git Debug] No directory found for buffer: " .. bufname, vim.log.levels.DEBUG)
     end
+  else
+    vim.notify("[Oil Git Debug] Git status not enabled in view rendering", vim.log.levels.DEBUG)
   end
 
   if entry_type == "directory" then

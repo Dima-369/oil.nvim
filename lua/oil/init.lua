@@ -1117,6 +1117,11 @@ M.setup = function(opts)
   local config = require("oil.config")
 
   config.setup(opts)
+  
+  -- Initialize git status monitoring
+  local git_status = require("oil.git_status")
+  git_status.setup(config.git_status)
+  
   set_colors()
   vim.api.nvim_create_user_command("Oil", function(args)
     local util = require("oil.util")

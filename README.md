@@ -13,8 +13,28 @@ This is an enhanced fork of [stevearc/oil.nvim](https://github.com/stevearc/oil.
   - After refresh, cursor automatically jumps back to the same file name
   - Falls back gracefully if the file no longer exists
 
+### Git Status Monitoring
+- **Feature**: Real-time git status monitoring with visual indicators for file changes
+- **How it works**:
+  - Periodically runs `git status --porcelain` every 3 seconds (configurable)
+  - Highlights modified files with `DiffChange` colors
+  - Highlights added/untracked files with `Comment` colors
+  - Highlights deleted files with `DiffDelete` colors
+  - Works for any git repository without requiring sign column
+- **Configuration**:
+  ```lua
+  require("oil").setup({
+    git_status = {
+      enabled = true,           -- Enable git status monitoring
+      update_interval = 3000,   -- Update every 3 seconds (in milliseconds)
+    },
+  })
+  ```
+
 ### Usage
 Simply press your refresh key (default `<C-l>`) and the cursor will return to the same file after the directory is refreshed. No more losing your place in large directories!
+
+Git status indicators will automatically appear on files as you modify them, providing instant visual feedback about your repository state.
 
 ---
 

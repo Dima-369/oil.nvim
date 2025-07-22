@@ -4,6 +4,7 @@ local columns = require("oil.columns")
 local config = require("oil.config")
 local constants = require("oil.constants")
 local fs = require("oil.fs")
+local git_status = require("oil.git_status")
 local keymap_util = require("oil.keymap_util")
 local loading = require("oil.loading")
 local util = require("oil.util")
@@ -788,17 +789,31 @@ M.format_entry_cols = function(entry, column_defs, col_width, adapter, is_hidden
     end
   end
 
+  -- Check for git status highlighting
+  local git_hl = nil
+  if git_status.is_enabled() then
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    local _, dir = util.parse_url(bufname)
+    if dir then
+      local full_path = dir .. "/" .. name
+      local status_code = git_status.get_status(full_path)
+      git_hl = git_status.get_highlight_group(status_code)
+    end
+  end
+
   if entry_type == "directory" then
-    table.insert(cols, { name .. "/", "OilDir" .. hl_suffix })
+    local hl_group = git_hl or ("OilDir" .. hl_suffix)
+    table.insert(cols, { name .. "/", hl_group })
   elseif entry_type == "socket" then
-    table.insert(cols, { name, "OilSocket" .. hl_suffix })
+    local hl_group = git_hl or ("OilSocket" .. hl_suffix)
+    table.insert(cols, { name, hl_group })
   elseif entry_type == "link" then
     if not link_name then
       link_name, link_target = get_link_text(name, meta)
     end
     local is_orphan = not (meta and meta.link_stat)
     if not link_name_hl then
-      link_name_hl = (is_orphan and "OilOrphanLink" or "OilLink") .. hl_suffix
+      link_name_hl = git_hl or ((is_orphan and "OilOrphanLink" or "OilLink") .. hl_suffix)
     end
     table.insert(cols, { link_name, link_name_hl })
 
@@ -809,7 +824,8 @@ M.format_entry_cols = function(entry, column_defs, col_width, adapter, is_hidden
       table.insert(cols, { link_target, link_target_hl })
     end
   else
-    table.insert(cols, { name, "OilFile" .. hl_suffix })
+    local hl_group = git_hl or ("OilFile" .. hl_suffix)
+    table.insert(cols, { name, hl_group })
   end
 
   return cols

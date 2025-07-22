@@ -120,6 +120,13 @@ local default_config = {
       return false
     end,
   },
+  -- Git status monitoring configuration
+  git_status = {
+    -- Enable git status monitoring and highlighting
+    enabled = false,
+    -- Update interval in milliseconds (default: 3000 = 3 seconds)
+    update_interval = 3000,
+  },
   -- Configuration for the floating window in oil.open_float
   float = {
     -- Padding around the floating window
@@ -235,6 +242,7 @@ default_config.view_options.highlight_filename = nil
 ---@field view_options oil.ViewOptions
 ---@field extra_scp_args string[]
 ---@field git oil.GitOptions
+---@field git_status oil.GitStatusOptions
 ---@field float oil.FloatWindowConfig
 ---@field preview_win oil.PreviewWindowConfig
 ---@field confirmation oil.ConfirmationWindowConfig
@@ -263,6 +271,7 @@ local M = {}
 ---@field view_options? oil.SetupViewOptions Configure which files are shown and how they are shown.
 ---@field extra_scp_args? string[] Extra arguments to pass to SCP when moving/copying files over SSH
 ---@field git? oil.SetupGitOptions EXPERIMENTAL support for performing file operations with git
+---@field git_status? oil.SetupGitStatusOptions Git status monitoring configuration
 ---@field float? oil.SetupFloatWindowConfig Configuration for the floating window in oil.open_float
 ---@field preview_win? oil.SetupPreviewWindowConfig Configuration for the file preview window
 ---@field confirmation? oil.SetupConfirmationWindowConfig Configuration for the floating action confirmation window
@@ -311,6 +320,14 @@ local M = {}
 ---@field add? fun(path: string): boolean Return true to automatically git add a new file
 ---@field mv? fun(src_path: string, dest_path: string): boolean Return true to automatically git mv a moved file
 ---@field rm? fun(path: string): boolean Return true to automatically git rm a deleted file
+
+---@class (exact) oil.GitStatusOptions
+---@field enabled boolean
+---@field update_interval integer
+
+---@class (exact) oil.SetupGitStatusOptions
+---@field enabled? boolean Enable git status monitoring and highlighting
+---@field update_interval? integer Update interval in milliseconds (default: 3000)
 
 ---@class (exact) oil.WindowDimensionDualConstraint
 ---@field [1] number

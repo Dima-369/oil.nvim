@@ -139,6 +139,26 @@ M.toggle_hidden = function()
   require("oil.view").toggle_hidden()
 end
 
+---Set a regex filter for the current oil buffer
+---@param pattern nil|string The regex pattern to filter by, or nil to clear the filter
+---@param bufnr? integer The buffer number (defaults to current buffer)
+M.set_filter = function(pattern, bufnr)
+  require("oil.view").set_filter(pattern, bufnr)
+end
+
+---Get the current regex filter for an oil buffer
+---@param bufnr? integer The buffer number (defaults to current buffer)
+---@return nil|string The current filter pattern, or nil if no filter is set
+M.get_filter = function(bufnr)
+  return require("oil.view").get_filter(bufnr)
+end
+
+---Clear the regex filter for an oil buffer
+---@param bufnr? integer The buffer number (defaults to current buffer)
+M.clear_filter = function(bufnr)
+  require("oil.view").clear_filter(bufnr)
+end
+
 ---Get the current directory
 ---@param bufnr? integer
 ---@return nil|string
@@ -152,6 +172,17 @@ M.get_current_dir = function(bufnr)
     assert(path)
     return fs.posix_to_os_path(path)
   end
+end
+
+---Get the current directory and filter information
+---@param bufnr? integer
+---@return nil|string dir The current directory
+---@return nil|string filter The current regex filter pattern
+M.get_current_dir_and_filter = function(bufnr)
+  bufnr = bufnr or 0
+  local dir = M.get_current_dir(bufnr)
+  local filter = M.get_filter(bufnr)
+  return dir, filter
 end
 
 ---Get the oil url for a given directory

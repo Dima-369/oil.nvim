@@ -18,6 +18,9 @@ local FIELD_META = constants.FIELD_META
 -- map of path->last entry under cursor
 local last_cursor_entry = {}
 
+-- map of bufnr->regex filter pattern
+local buffer_filters = {}
+
 ---@param name string
 ---@param bufnr integer
 ---@return boolean display
@@ -28,6 +31,16 @@ M.should_display = function(name, bufnr)
   else
     local is_hidden = config.view_options.is_hidden_file(name, bufnr)
     local display = config.view_options.show_hidden or not is_hidden
+    
+    -- Apply regex filter if one is set for this buffer
+    local filter_pattern = buffer_filters[bufnr]
+    if display and filter_pattern and name ~= ".." then
+      local ok, matches = pcall(string.match, name, filter_pattern)
+      if not ok or not matches then
+        display = false
+      end
+    end
+    
     return display, is_hidden
   end
 end
@@ -117,6 +130,52 @@ M.set_sort = function(new_sort)
     -- TODO only refetch if we don't have all the necessary data for the columns
     M.rerender_all_oil_buffers({ refetch = true })
   end
+end
+
+---Set a regex filter for the current oil buffer
+---@param pattern nil|string The regex pattern to filter by, or nil to clear the filter
+---@param bufnr? integer The buffer number (defaults to current buffer)
+M.set_filter = function(pattern, bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if vim.bo[bufnr].filetype ~= "oil" then
+    vim.notify("set_filter can only be used in oil buffers", vim.log.levels.WARN)
+    return
+  end
+  
+  local any_modified = are_any_modified()
+  if any_modified then
+    vim.notify("Cannot change filter when you have unsaved changes", vim.log.levels.WARN)
+    return
+  end
+  
+  if pattern and pattern ~= "" then
+    -- Test the pattern to make sure it's valid
+    local ok, err = pcall(string.match, "test", pattern)
+    if not ok then
+      vim.notify("Invalid regex pattern: " .. tostring(err), vim.log.levels.ERROR)
+      return
+    end
+    buffer_filters[bufnr] = pattern
+  else
+    buffer_filters[bufnr] = nil
+  end
+  
+  -- Re-render the buffer to apply the filter
+  M.render_buffer_async(bufnr, { refetch = false })
+end
+
+---Get the current regex filter for an oil buffer
+---@param bufnr? integer The buffer number (defaults to current buffer)
+---@return nil|string The current filter pattern, or nil if no filter is set
+M.get_filter = function(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  return buffer_filters[bufnr]
+end
+
+---Clear the regex filter for an oil buffer
+---@param bufnr? integer The buffer number (defaults to current buffer)
+M.clear_filter = function(bufnr)
+  M.set_filter(nil, bufnr)
 end
 
 ---@class oil.ViewData
@@ -387,6 +446,8 @@ M.initialize = function(bufnr)
     callback = function()
       local view_data = session[bufnr]
       session[bufnr] = nil
+      -- Clean up filter state
+      buffer_filters[bufnr] = nil
       if view_data and view_data.fs_event then
         view_data.fs_event:stop()
       end

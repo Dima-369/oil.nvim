@@ -31,6 +31,32 @@ This is an enhanced fork of [stevearc/oil.nvim](https://github.com/stevearc/oil.
   })
   ```
 
+### Regex Filtering
+- **Feature**: Filter the current directory view using regex patterns
+- **How it works**:
+  - Apply regex patterns to filter which files and directories are shown
+  - Filters work in addition to existing hidden file logic
+  - The ".." parent directory is never filtered out
+  - Filter state is displayed in winbar/statusline when active
+- **Usage**:
+  ```lua
+  -- Set a filter to show only .lua files
+  require("oil").set_filter("%.lua$")
+  
+  -- Clear the current filter
+  require("oil").clear_filter()
+  
+  -- Get current filter
+  local filter = require("oil").get_filter()
+  ```
+- **Keymaps** (add to your oil setup):
+  ```lua
+  keymaps = {
+    ["gf"] = "actions.set_filter",  -- Set regex filter
+    ["gF"] = "actions.clear_filter", -- Clear filter
+  }
+  ```
+
 ### Usage
 Simply press your refresh key (default `<C-l>`) and the cursor will return to the same file after the directory is refreshed. No more losing your place in large directories!
 

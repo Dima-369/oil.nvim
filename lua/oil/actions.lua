@@ -622,4 +622,22 @@ M._get_actions = function()
   return ret
 end
 
+M.set_filter = {
+  desc = "Set a regex filter for the current oil buffer",
+  callback = function()
+    vim.ui.input({ prompt = "Filter pattern (regex): " }, function(pattern)
+      if pattern and pattern ~= "" then
+        oil.set_filter(pattern)
+      end
+    end)
+  end,
+}
+
+M.clear_filter = {
+  desc = "Clear the current regex filter",
+  callback = function()
+    oil.clear_filter()
+  end,
+}
+
 return M

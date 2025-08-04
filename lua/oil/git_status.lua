@@ -112,23 +112,24 @@ local function update_all_repos()
       status_cache[repo_root] = nil
     else
       update_repo_status(repo_root, function()
-      -- Only refresh oil buffers if no buffer is currently modified
-      -- This prevents wiping user input while typing new file names
-      local view = require("oil.view")
-      local buffers = view.get_all_buffers()
-      local has_modifications = false
-      
-      for _, bufnr in ipairs(buffers) do
-        if vim.bo[bufnr].modified then
-          has_modifications = true
-          break
+        -- Only refresh oil buffers if no buffer is currently modified
+        -- This prevents wiping user input while typing new file names
+        local view = require("oil.view")
+        local buffers = view.get_all_buffers()
+        local has_modifications = false
+        
+        for _, bufnr in ipairs(buffers) do
+          if vim.bo[bufnr].modified then
+            has_modifications = true
+            break
+          end
         end
-      end
-      
-      if not has_modifications then
-        view.rerender_all_oil_buffers({ refetch = false })
-      end
-    end)
+        
+        if not has_modifications then
+          view.rerender_all_oil_buffers({ refetch = false })
+        end
+      end)
+    end
   end
 end
 

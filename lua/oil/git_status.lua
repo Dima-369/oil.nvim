@@ -28,6 +28,16 @@ local function get_git_root(path)
   end
 end
 
+---Check if a path exists using libuv
+---@param path string
+---@return boolean
+local function path_exists(path)
+  local ok, stat = pcall(function()
+    return (vim.uv or vim.loop).fs_stat(path)
+  end)
+  return ok and stat ~= nil
+end
+
 ---Parse git status --porcelain output
 ---@param output string
 ---@return table<string, string>
@@ -54,6 +64,17 @@ end
 ---@param repo_root string
 ---@param callback? fun()
 local function update_repo_status(repo_root, callback)
+  -- If the repository root no longer exists (e.g. directory was deleted),
+  -- avoid calling vim.system with a non-existent cwd which would error.
+  if not path_exists(repo_root) then
+    -- Remove stale cache for deleted/missing repo roots
+    status_cache[repo_root] = nil
+    if callback then
+      vim.schedule(callback)
+    end
+    return
+  end
+
   local proc = vim.system(
     { "git", "status", "--porcelain" },
     {
@@ -86,7 +107,11 @@ local function update_all_repos()
   end
   
   for _, repo_root in ipairs(repos) do
-    update_repo_status(repo_root, function()
+    -- Skip repos whose directories no longer exist
+    if not path_exists(repo_root) then
+      status_cache[repo_root] = nil
+    else
+      update_repo_status(repo_root, function()
       -- Only refresh oil buffers if no buffer is currently modified
       -- This prevents wiping user input while typing new file names
       local view = require("oil.view")
@@ -139,7 +164,7 @@ M.get_status = function(file_path, is_directory)
   end
   
   local repo_root = get_git_root(file_path)
-  if not repo_root then
+  if not repo_root or not path_exists(repo_root) then
     return nil
   end
   
@@ -254,7 +279,7 @@ M.setup = function(opts)
     callback = function(args)
       local file_path = vim.api.nvim_buf_get_name(args.buf)
       local repo_root = get_git_root(file_path)
-      if repo_root and status_cache[repo_root] then
+      if repo_root and path_exists(repo_root) and status_cache[repo_root] then
         -- Update git status immediately after save
         update_repo_status(repo_root, function()
           -- Only refresh oil buffers if no buffer is currently modified

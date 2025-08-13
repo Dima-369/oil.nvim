@@ -864,8 +864,17 @@ M.format_entry_cols = function(entry, column_defs, col_width, adapter, is_hidden
   end
 
   if entry_type == "directory" then
-    local hl_group = git_hl or ("OilDir" .. hl_suffix)
-    table.insert(cols, { name .. "/", hl_group })
+    -- Always use blue for directories, but add circle indicator for git modifications
+    local dir_hl = "OilDir" .. hl_suffix
+    local dir_name = name .. "/"
+    
+    if git_hl then
+      -- Add circle character with git status color for modified directories
+      table.insert(cols, { dir_name, dir_hl })
+      table.insert(cols, { "●", git_hl })
+    else
+      table.insert(cols, { dir_name, dir_hl })
+    end
   elseif entry_type == "socket" then
     local hl_group = git_hl or ("OilSocket" .. hl_suffix)
     table.insert(cols, { name, hl_group })

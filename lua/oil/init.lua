@@ -857,7 +857,7 @@ M._get_highlights = function()
     {
       name = "OilDir",
       link = "Directory",
-      desc = "Directory names in an oil buffer",
+      desc = "Directory names in an oil buffer (always blue)",
     },
     {
       name = "OilDirHidden",

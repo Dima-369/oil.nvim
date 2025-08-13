@@ -47,13 +47,34 @@ local function parse_git_status(output)
     if #line >= 3 then
       local status_code = line:sub(1, 2)
       local file_path = line:sub(4)
+      
+      -- Handle quoted filenames (git quotes filenames with spaces/special chars)
+      if file_path:sub(1, 1) == '"' and file_path:sub(-1) == '"' then
+        file_path = file_path:sub(2, -2) -- Remove surrounding quotes
+        -- Unescape common escape sequences
+        file_path = file_path:gsub('\\"', '"')
+        file_path = file_path:gsub('\\\\', '\\')
+        file_path = file_path:gsub('\\n', '\n')
+        file_path = file_path:gsub('\\t', '\t')
+      end
+      
       -- Handle renamed files (format: "old_name -> new_name")
       if file_path:match(" -> ") then
         local new_name = file_path:match(" -> (.+)$")
         if new_name then
+          -- Handle quotes in renamed file new name
+          if new_name:sub(1, 1) == '"' and new_name:sub(-1) == '"' then
+            new_name = new_name:sub(2, -2) -- Remove surrounding quotes
+            -- Unescape common escape sequences
+            new_name = new_name:gsub('\\"', '"')
+            new_name = new_name:gsub('\\\\', '\\')
+            new_name = new_name:gsub('\\n', '\n')
+            new_name = new_name:gsub('\\t', '\t')
+          end
           file_path = new_name
         end
       end
+      
       status[file_path] = status_code
     end
   end

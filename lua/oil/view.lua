@@ -390,6 +390,54 @@ local function redraw_trash_virtual_text(bufnr)
   end
 end
 
+local function redraw_git_virtual_text(bufnr)
+  if not vim.api.nvim_buf_is_valid(bufnr) or not vim.api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
+  if not git_status.is_enabled() then
+    return
+  end
+  local parser = require("oil.mutator.parser")
+  local adapter = util.get_adapter(bufnr, true)
+  if not adapter then
+    return
+  end
+  local bufname = vim.api.nvim_buf_get_name(bufnr)
+  local _, dir = util.parse_url(bufname)
+  if not dir then
+    return
+  end
+  
+  local ns = vim.api.nvim_create_namespace("OilGitVtext")
+  vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+  local column_defs = columns.get_supported_columns(adapter)
+  
+  for lnum, line in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)) do
+    local result = parser.parse_line(adapter, line, column_defs)
+    local entry = result and result.entry
+    if entry then
+      local name = entry[FIELD_NAME]
+      local entry_type = entry[FIELD_TYPE]
+      local full_path = dir:gsub("/$", "") .. "/" .. name
+      local is_directory = (entry_type == "directory")
+      local status_code = git_status.get_status(full_path, is_directory)
+      local git_hl = git_status.get_highlight_group(status_code)
+      
+      if git_hl and is_directory then
+        vim.api.nvim_buf_set_extmark(bufnr, ns, lnum - 1, 0, {
+          virt_text = {
+            {
+              " ●",
+              git_hl,
+            },
+          },
+          virt_text_pos = "eol",
+        })
+      end
+    end
+  end
+end
+
 ---@param bufnr integer
 M.initialize = function(bufnr)
   if bufnr == 0 then
@@ -594,6 +642,35 @@ M.initialize = function(bufnr)
       end,
     })
   end
+  
+  -- Watch for TextChanged and update git status virtual text
+  if git_status.is_enabled() then
+    local git_debounce_timer = assert(uv.new_timer())
+    local git_pending = false
+    vim.api.nvim_create_autocmd("TextChanged", {
+      desc = "Update oil git status virtual text",
+      buffer = bufnr,
+      callback = function()
+        -- Respond immediately to prevent flickering, then set the timer for a "cooldown period"
+        -- If this is called again during the cooldown window, we will rerender after cooldown.
+        if git_debounce_timer:is_active() then
+          git_pending = true
+        else
+          redraw_git_virtual_text(bufnr)
+        end
+        git_debounce_timer:start(
+          50,
+          0,
+          vim.schedule_wrap(function()
+            if git_pending then
+              git_pending = false
+              redraw_git_virtual_text(bufnr)
+            end
+          end)
+        )
+      end,
+    })
+  end
   M.render_buffer_async(bufnr, {}, function(err)
     if err then
       vim.notify(
@@ -734,6 +811,9 @@ local function render_buffer(bufnr, opts)
   vim.bo[bufnr].modifiable = false
   vim.bo[bufnr].modified = false
   util.set_highlights(bufnr, highlights)
+  
+  -- Add git status virtual text
+  redraw_git_virtual_text(bufnr)
 
   if opts.jump then
     -- TODO why is the schedule necessary?
@@ -864,23 +944,10 @@ M.format_entry_cols = function(entry, column_defs, col_width, adapter, is_hidden
   end
 
   if entry_type == "directory" then
-    -- Always use blue for directories, but add circle indicator for git modifications
+    -- Always use blue for directories
     local dir_hl = "OilDir" .. hl_suffix
     local dir_name = name .. "/"
-    
-    if git_hl then
-      -- Combine into a single chunk with multiple highlights to fix parsing and highlighting
-      local text = dir_name .. " ●"
-      table.insert(cols, {
-        text,
-        {
-          { dir_hl, 0, #dir_name },
-          { git_hl, #dir_name, #text },
-        },
-      })
-    else
-      table.insert(cols, { dir_name, dir_hl })
-    end
+    table.insert(cols, { dir_name, dir_hl })
   elseif entry_type == "socket" then
     local hl_group = git_hl or ("OilSocket" .. hl_suffix)
     table.insert(cols, { name, hl_group })

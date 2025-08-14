@@ -21,7 +21,7 @@ This is an enhanced fork of [stevearc/oil.nvim](https://github.com/stevearc/oil.
   - Highlights added/untracked files with `Comment` colors
   - Highlights deleted files with `DiffDelete` colors
   - Works for any git repository without requiring sign column
-  - **Directory Enhancement**: Directory names are always blue (consistent), with git modifications indicated by a colored circle (●) character
+  - **Directory Enhancement**: Directory names are highlighted via `Appearance_ProjectView_DirectoryIcon`, with git modifications indicated by a colored circle (●) character
 - **Configuration**:
   ```lua
   require("oil").setup({

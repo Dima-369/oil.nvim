@@ -980,7 +980,7 @@ end
 local function set_colors()
   for _, conf in ipairs(M._get_highlights()) do
     if conf.link then
-      vim.api.nvim_set_hl(0, conf.name, { default = true, link = conf.link })
+      vim.api.nvim_set_hl(0, conf.name, { link = conf.link })
     end
   end
   -- TODO can remove this call once we drop support for Neovim 0.8. FloatTitle was introduced as a

@@ -869,9 +869,15 @@ M.format_entry_cols = function(entry, column_defs, col_width, adapter, is_hidden
     local dir_name = name .. "/"
     
     if git_hl then
-      -- Add circle character with git status color for modified directories
-      table.insert(cols, { dir_name, dir_hl })
-      table.insert(cols, { "●", git_hl })
+      -- Combine into a single chunk with multiple highlights to fix parsing and highlighting
+      local text = dir_name .. " ●"
+      table.insert(cols, {
+        text,
+        {
+          { dir_hl, 0, #dir_name },
+          { git_hl, #dir_name, #text },
+        },
+      })
     else
       table.insert(cols, { dir_name, dir_hl })
     end
